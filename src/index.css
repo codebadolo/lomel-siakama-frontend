@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Tasko design tokens ─────────────────────────────────────── */
+:root {
+  --background:            #ffffff;
+  --foreground:            #0f172a;
+  --card:                  #ffffff;
+  --card-foreground:       #0f172a;
+  --primary:               #4f46e5;
+  --primary-foreground:    #ffffff;
+  --secondary:             #f1f5f9;
+  --secondary-foreground:  #0f172a;
+  --muted:                 #f8fafc;
+  --muted-foreground:      #64748b;
+  --border:                #e2e8f0;
+  --destructive:           #ef4444;
+  --radius:                0.625rem;
+  --shadow-primary:        rgba(79, 70, 229, 0.25);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
