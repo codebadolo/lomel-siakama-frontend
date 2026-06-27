@@ -8,6 +8,10 @@ import { ParentPortalPage } from '@/pages/parent/ParentPortalPage'
 
 const MessagesPage       = lazy(() => import('@/pages/messages/MessagesPage'))
 const UtilisateursPage   = lazy(() => import('@/pages/utilisateurs/UtilisateursPage'))
+const PromoEcolesPage    = lazy(() => import('@/pages/promoteur/PromoteurEcolesPage'))
+const PromoAbosPage      = lazy(() => import('@/pages/promoteur/PromoteurAbonnementsPage'))
+const PromoMonitorPage   = lazy(() => import('@/pages/promoteur/PromoteurMonitoringPage'))
+const PromoAnnoncesPage  = lazy(() => import('@/pages/promoteur/PromoteurAnnoncesPage'))
 const ElevesPage         = lazy(() => import('@/pages/eleves/ElevesPage'))
 const EleveDetailPage    = lazy(() => import('@/pages/eleves/EleveDetailPage'))
 const ClassesPage        = lazy(() => import('@/pages/classes/ClassesPage'))
@@ -59,8 +63,13 @@ export const router = createBrowserRouter([
             { path: 'emploi-du-temps', element: <Suspensed><EmploiDuTempsPage /></Suspensed> },
             { path: 'finances',        element: <Suspensed><FinancesPage /></Suspensed> },
             { path: 'discipline',      element: <Suspensed><DisciplinePage /></Suspensed> },
-            { path: 'notifications',   element: <Suspensed><NotificationsPage /></Suspensed> },
-            { path: 'parametres',      element: <Suspensed><ParametresPage /></Suspensed> },
+            { path: 'notifications',          element: <Suspensed><NotificationsPage /></Suspensed> },
+            { path: 'parametres',             element: <Suspensed><ParametresPage /></Suspensed> },
+            // Routes promoteur
+            { path: 'promoteur/ecoles',       element: <Suspensed><PromoEcolesPage /></Suspensed> },
+            { path: 'promoteur/abonnements',  element: <Suspensed><PromoAbosPage /></Suspensed> },
+            { path: 'promoteur/monitoring',   element: <Suspensed><PromoMonitorPage /></Suspensed> },
+            { path: 'promoteur/annonces',     element: <Suspensed><PromoAnnoncesPage /></Suspensed> },
             {
               element: <ProtectedRoute allowedRoles={['admin']} />,
               children: [

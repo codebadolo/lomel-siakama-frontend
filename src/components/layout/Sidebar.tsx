@@ -3,7 +3,7 @@ import {
   LayoutDashboard, MessageSquare, Megaphone, Users, CheckSquare,
   FileText, BookOpen, Calendar, CreditCard, AlertTriangle,
   UserCog, Settings, LogOut, GraduationCap, School, UserRound,
-  Bell,
+  Bell, Activity,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -115,8 +115,26 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
   },
 ]
 
+const PROMOTEUR_SECTIONS: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Gestion',
+    items: [
+      { to: '/promoteur/ecoles',        icon: School,    label: 'Écoles'        },
+      { to: '/promoteur/abonnements',   icon: CreditCard, label: 'Abonnements'   },
+      { to: '/promoteur/monitoring',    icon: Activity,  label: 'Monitoring'    },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { to: '/promoteur/annonces',      icon: Megaphone, label: 'Annonces'      },
+    ],
+  },
+]
+
 export function Sidebar() {
   const { user, logout } = useAuthStore()
+  const { isPromoter } = usePermissions()
   const navigate = useNavigate()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -124,6 +142,9 @@ export function Sidebar() {
     logout()
     navigate('/login', { replace: true })
   }
+
+  const sections = isPromoter ? PROMOTEUR_SECTIONS : SECTIONS
+  const subtitle = isPromoter ? 'Espace Promoteur' : 'Administration'
 
   return (
     <aside className="w-[232px] bg-card border-r border-[var(--border)] flex flex-col shrink-0">
@@ -134,7 +155,7 @@ export function Sidebar() {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-bold text-foreground tracking-tight">SGS</p>
-          <p className="text-[11px] text-muted-foreground truncate">Administration</p>
+          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
         </div>
       </div>
 
@@ -155,7 +176,7 @@ export function Sidebar() {
           <span>Tableau de bord</span>
         </NavLink>
 
-        {SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.label}>
             <p className="px-2.5 mb-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
               {section.label}
