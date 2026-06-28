@@ -17,19 +17,27 @@ const PUBLIC_BADGE: Record<string, 'neutral' | 'warning' | 'success'> = {
   enseignants: 'success',
 }
 
+const CATEGORIE_CONFIG: Record<string, { label: string; className: string }> = {
+  general:       { label: 'Général',           className: 'bg-gray-100 text-gray-600' },
+  recrutement:   { label: 'Recrutement',        className: 'bg-blue-100 text-blue-700' },
+  para_scolaire: { label: 'Para-scolaire',      className: 'bg-purple-100 text-purple-700' },
+}
+
 export default function AnnoncesPage() {
   const qc = useQueryClient()
   const { isAdmin } = usePermissions()
 
-  const [filterActif,  setFilterActif]  = useState<string | number>('')
-  const [filterPublic, setFilterPublic] = useState<string | number>('')
+  const [filterActif,     setFilterActif]     = useState<string | number>('')
+  const [filterPublic,    setFilterPublic]     = useState<string | number>('')
+  const [filterCategorie, setFilterCategorie] = useState<string | number>('')
   const [modalAnnonce, setModalAnnonce] = useState<Annonce | null | false>(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['annonces', filterActif, filterPublic],
+    queryKey: ['annonces', filterActif, filterPublic, filterCategorie],
     queryFn: () => messagesApi.listAnnonces({
-      est_active:   filterActif === '' ? undefined : filterActif === 'true',
-      public_cible: filterPublic ? String(filterPublic) : undefined,
+      est_active:   filterActif     === '' ? undefined : filterActif === 'true',
+      public_cible: filterPublic    ? String(filterPublic) : undefined,
+      categorie:    filterCategorie ? String(filterCategorie) : undefined,
     }),
   })
 
@@ -44,7 +52,19 @@ export default function AnnoncesPage() {
     {
       header: 'Titre',
       accessor: 'titre',
-      cell: (row) => <span className="font-medium text-gray-900">{row.titre}</span>,
+      cell: (row) => <span className="font-medium text-foreground">{row.titre}</span>,
+    },
+    {
+      header: 'Catégorie',
+      accessor: 'categorie',
+      cell: (row) => {
+        const cfg = CATEGORIE_CONFIG[row.categorie] ?? CATEGORIE_CONFIG.general
+        return (
+          <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.className}`}>
+            {cfg.label}
+          </span>
+        )
+      },
     },
     {
       header: 'Public cible',
@@ -60,26 +80,24 @@ export default function AnnoncesPage() {
       accessor: 'est_active',
       cell: (row) => row.est_active ? (
         <span className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          Active
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
         </span>
       ) : (
-        <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-          Inactive
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-gray-100 border border-[var(--border)] rounded-full px-2 py-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> Inactive
         </span>
       ),
     },
     {
       header: 'Auteur',
       accessor: 'nom_auteur',
-      cell: (row) => <span className="text-gray-600 text-sm">{row.nom_auteur}</span>,
+      cell: (row) => <span className="text-muted-foreground text-sm">{row.nom_auteur}</span>,
     },
     {
       header: 'Publié le',
       accessor: 'publie_le',
       cell: (row) => (
-        <span className="text-gray-400 text-xs">
+        <span className="text-muted-foreground text-xs">
           {format(new Date(row.publie_le), 'd MMM yyyy', { locale: fr })}
         </span>
       ),
@@ -121,25 +139,35 @@ export default function AnnoncesPage() {
               { value: 'enseignants', label: 'Enseignants' },
             ],
           },
+          {
+            key: 'categorie',
+            label: 'Toutes catégories',
+            options: [
+              { value: 'general',       label: 'Général' },
+              { value: 'recrutement',   label: 'Recrutement' },
+              { value: 'para_scolaire', label: 'Para-scolaire' },
+            ],
+          },
         ]}
-        filterValues={{ statut: filterActif, public: filterPublic }}
+        filterValues={{ statut: filterActif, public: filterPublic, categorie: filterCategorie }}
         onFilterChange={(key, value) => {
-          if (key === 'statut') setFilterActif(value)
-          if (key === 'public') setFilterPublic(value)
+          if (key === 'statut')    setFilterActif(value)
+          if (key === 'public')    setFilterPublic(value)
+          if (key === 'categorie') setFilterCategorie(value)
         }}
         emptyMessage="Aucune annonce trouvée"
         actions={isAdmin ? (row) => (
           <div className="flex items-center gap-1">
             <button
               onClick={() => setModalAnnonce(row)}
-              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-primary hover:bg-secondary rounded-md transition-colors"
               title="Modifier"
             >
               <Edit2 size={13} />
             </button>
             <button
               onClick={() => { if (confirm('Supprimer cette annonce ?')) deleteMutation.mutate(row.id) }}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-red-50 rounded-md transition-colors"
               title="Supprimer"
             >
               <Trash2 size={13} />

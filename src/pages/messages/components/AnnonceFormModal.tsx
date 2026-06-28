@@ -10,17 +10,24 @@ import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
-  titre: z.string().min(1, 'Titre requis'),
-  contenu: z.string().min(1, 'Contenu requis'),
+  titre:        z.string().min(1, 'Titre requis'),
+  contenu:      z.string().min(1, 'Contenu requis'),
   public_cible: z.enum(['tous', 'parents', 'enseignants']),
-  est_active: z.boolean(),
+  categorie:    z.enum(['general', 'recrutement', 'para_scolaire']),
+  est_active:   z.boolean(),
 })
 type FormValues = z.infer<typeof schema>
 
 const PUBLIC_OPTIONS = [
-  { value: 'tous', label: 'Tout le monde' },
-  { value: 'parents', label: 'Parents' },
+  { value: 'tous',        label: 'Tout le monde' },
+  { value: 'parents',     label: 'Parents' },
   { value: 'enseignants', label: 'Enseignants' },
+] as const
+
+const CATEGORIE_OPTIONS = [
+  { value: 'general',       label: 'Général' },
+  { value: 'recrutement',   label: 'Test / Recrutement' },
+  { value: 'para_scolaire', label: 'Activité para-scolaire' },
 ] as const
 
 interface Props {
@@ -36,20 +43,22 @@ export function AnnonceFormModal({ annonce, onClose }: Props) {
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      titre: '',
-      contenu: '',
+      titre:        '',
+      contenu:      '',
       public_cible: 'tous',
-      est_active: true,
+      categorie:    'general',
+      est_active:   true,
     },
   })
 
   useEffect(() => {
     if (annonce) {
       reset({
-        titre: annonce.titre,
-        contenu: annonce.contenu,
+        titre:        annonce.titre,
+        contenu:      annonce.contenu,
         public_cible: annonce.public_cible,
-        est_active: annonce.est_active,
+        categorie:    annonce.categorie ?? 'general',
+        est_active:   annonce.est_active,
       })
     }
   }, [annonce, reset])
@@ -57,10 +66,11 @@ export function AnnonceFormModal({ annonce, onClose }: Props) {
   const saveMutation = useMutation({
     mutationFn: (values: FormValues) => {
       const form = new FormData()
-      form.append('titre', values.titre)
-      form.append('contenu', values.contenu)
+      form.append('titre',        values.titre)
+      form.append('contenu',      values.contenu)
       form.append('public_cible', values.public_cible)
-      form.append('est_active', String(values.est_active))
+      form.append('categorie',    values.categorie)
+      form.append('est_active',   String(values.est_active))
       if (selectedFileRef.current) {
         form.append('fichier', selectedFileRef.current)
       }
@@ -109,25 +119,36 @@ export function AnnonceFormModal({ annonce, onClose }: Props) {
             {errors.contenu && <p className="text-xs text-red-500 mt-0.5">{errors.contenu.message}</p>}
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Public cible</label>
               <select
                 {...register('public_cible')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
               >
                 {PUBLIC_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
             </div>
-
-            <div className="flex items-end gap-2 pb-0.5">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register('est_active')} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                <span className="text-sm text-gray-700">Active</span>
-              </label>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Catégorie</label>
+              <select
+                {...register('categorie')}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+              >
+                {CATEGORIE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" {...register('est_active')} className="rounded border-gray-300 text-primary focus:ring-primary/40" />
+              <span className="text-sm text-gray-700">Publier immédiatement</span>
+            </label>
           </div>
 
           {/* Fichier joint */}

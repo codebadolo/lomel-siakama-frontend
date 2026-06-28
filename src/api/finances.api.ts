@@ -25,6 +25,38 @@ export interface Paiement {
   numero_recu: string
 }
 
+export interface Impaye {
+  eleve_id: number
+  nom_eleve: string
+  frais: string
+  restant: number
+  echeance: string
+}
+
+export interface DetailFraisDashboard {
+  frais_id: number
+  libelle: string
+  montant_unitaire: number
+  nb_eleves: number
+  montant_attendu: number
+  montant_collecte: number
+  montant_restant: number
+  taux_recouvrement: number
+  echeance: string
+  est_echu: boolean
+}
+
+export interface TableauDeBord {
+  total_frais_attendu: number
+  total_collecte: number
+  total_impaye: number
+  taux_recouvrement: number
+  nb_frais: number
+  nb_eleves_impayes: number
+  repartition_modes: Array<{ mode_paiement: string; total: number; nb: number }>
+  detail_par_frais: DetailFraisDashboard[]
+}
+
 export const financesApi = {
   listFrais: async () => {
     const { data } = await apiClient.get<PaginatedResponse<FraisScolaire>>('/finances/frais/')
@@ -69,4 +101,19 @@ export const financesApi = {
     )
     return data
   },
+
+  getTableauDeBord: async () => {
+    const { data } = await apiClient.get<TableauDeBord>('/finances/paiements/tableau-de-bord/')
+    return data
+  },
+
+  getImpayes: async (joursRetard = 15) => {
+    const { data } = await apiClient.get<{ count: number; resultats: Impaye[] }>(
+      `/finances/paiements/impayes/?jours_retard=${joursRetard}`
+    )
+    return data
+  },
+
+  relevePdfUrl: (eleveId: number) =>
+    `${apiClient.defaults.baseURL}/finances/paiements/releve-pdf/?eleve_id=${eleveId}`,
 }

@@ -54,6 +54,7 @@ export interface Annonce {
   nom_auteur: string
   public_cible: 'tous' | 'parents' | 'enseignants'
   public_label: string
+  categorie: 'general' | 'recrutement' | 'para_scolaire'
   est_active: boolean
   publie_le: string
   fichier: string | null
@@ -94,7 +95,7 @@ export const messagesApi = {
   },
 
   // Annonces
-  listAnnonces: async (params?: { public_cible?: string; est_active?: boolean }) => {
+  listAnnonces: async (params?: { public_cible?: string; est_active?: boolean; categorie?: string }) => {
     const { data } = await apiClient.get<PaginatedResponse<Annonce>>('/communication/annonces/', { params })
     return data
   },

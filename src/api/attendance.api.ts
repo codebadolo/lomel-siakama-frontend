@@ -28,6 +28,33 @@ export interface Presence {
 
 export type StatutPresence = 'present' | 'absent' | 'retard'
 
+export interface RapportRow {
+  eleve: number
+  eleve__nom: string
+  eleve__prenom: string
+  eleve__matricule: string
+  eleve__classe__nom: string
+  total: number
+  presents: number
+  absents: number
+  retards: number
+  taux_presence: number
+  taux_absenteisme: number
+}
+
+export interface RapportAssiduite {
+  stats_globales: {
+    total: number
+    presents: number
+    absents: number
+    retards: number
+    taux_presence: number
+    taux_absenteisme: number
+  }
+  par_eleve: RapportRow[]
+  filtres: Record<string, string | null>
+}
+
 export const attendanceApi = {
   listCreneaux: async (params?: { classe?: number; jour_semaine?: number }) => {
     const { data } = await apiClient.get<PaginatedResponse<Creneau>>('/emploi-du-temps/', { params })
@@ -58,6 +85,16 @@ export const attendanceApi = {
     }>
   }) => {
     const { data } = await apiClient.post('/presences/saisie-groupee/', payload)
+    return data
+  },
+
+  getRapport: async (params: {
+    date_debut?: string
+    date_fin?: string
+    classe_id?: number
+    statut?: string
+  }) => {
+    const { data } = await apiClient.get<RapportAssiduite>('/presences/rapport/', { params })
     return data
   },
 }
