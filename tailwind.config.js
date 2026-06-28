@@ -15,6 +15,7 @@ export default {
         secondary:   { DEFAULT: 'var(--secondary)', foreground: 'var(--secondary-foreground)' },
         muted:       { DEFAULT: 'var(--muted)', foreground: 'var(--muted-foreground)' },
         destructive: { DEFAULT: 'var(--destructive)' },
+        accent:      { DEFAULT: 'var(--accent-blue)' },
       },
       borderRadius: {
         lg: 'var(--radius)',

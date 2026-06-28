@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, MessageSquare, Megaphone, Users, CheckSquare,
   FileText, BookOpen, Calendar, CreditCard, AlertTriangle,
-  UserCog, Settings, LogOut, GraduationCap, School, UserRound,
+  UserCog, Settings, LogOut, School, UserRound,
   Bell, Activity,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -149,12 +149,10 @@ export function Sidebar() {
   return (
     <aside className="w-[232px] bg-card border-r border-[var(--border)] flex flex-col shrink-0">
       {/* Brand */}
-      <div className="px-4 py-[14px] border-b border-[var(--border)] flex items-center gap-2.5 group cursor-pointer">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110">
-          <GraduationCap size={16} className="text-white" />
-        </div>
+      <div className="px-4 py-[14px] border-b border-[var(--border)] flex items-center gap-2.5">
+        <img src="/logo.png" alt="LumEL SGS" className="w-10 h-10 rounded-full object-cover shrink-0" />
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground tracking-tight">SGS</p>
+          <p className="text-sm font-bold text-foreground tracking-tight">LumEL SGS</p>
           <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
         </div>
       </div>

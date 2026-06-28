@@ -2,22 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Tasko design tokens ─────────────────────────────────────── */
+/* ── LumEL SGS — vert / rouge / bleu ────────────────────────── */
 :root {
-  --background:            #ffffff;
-  --foreground:            #0f172a;
+  --background:            #f8faf8;
+  --foreground:            #0f1f0f;
   --card:                  #ffffff;
-  --card-foreground:       #0f172a;
-  --primary:               #4f46e5;
+  --card-foreground:       #0f1f0f;
+  --primary:               #16a34a;
   --primary-foreground:    #ffffff;
-  --secondary:             #f1f5f9;
-  --secondary-foreground:  #0f172a;
-  --muted:                 #f8fafc;
-  --muted-foreground:      #64748b;
-  --border:                #e2e8f0;
-  --destructive:           #ef4444;
+  --secondary:             #f0faf0;
+  --secondary-foreground:  #0f1f0f;
+  --muted:                 #f3f9f3;
+  --muted-foreground:      #4b7a57;
+  --border:                #d1e8d1;
+  --destructive:           #dc2626;
+  --accent-blue:           #2563eb;
   --radius:                0.625rem;
-  --shadow-primary:        rgba(79, 70, 229, 0.25);
+  --shadow-primary:        rgba(22, 163, 74, 0.25);
 }
 
 @layer base {
