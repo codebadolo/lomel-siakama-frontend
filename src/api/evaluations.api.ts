@@ -77,8 +77,22 @@ export interface Bulletin {
 
 export const evaluationsApi = {
   listMatieres: async () => {
-    const { data } = await apiClient.get<PaginatedResponse<Matiere>>('/matieres/')
+    const { data } = await apiClient.get<PaginatedResponse<Matiere>>('/matieres/', { params: { taille_page: 100 } })
     return data
+  },
+
+  createMatiere: async (payload: { nom: string; coefficient: string; ecole: number }) => {
+    const { data } = await apiClient.post<Matiere>('/matieres/', payload)
+    return data
+  },
+
+  updateMatiere: async (id: number, payload: Partial<{ nom: string; coefficient: string }>) => {
+    const { data } = await apiClient.patch<Matiere>(`/matieres/${id}/`, payload)
+    return data
+  },
+
+  deleteMatiere: async (id: number) => {
+    await apiClient.delete(`/matieres/${id}/`)
   },
 
   list: async (params?: {

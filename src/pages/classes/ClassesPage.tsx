@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Edit2, Trash2, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, BookOpen, Users, TrendingUp, School } from 'lucide-react'
 import { schoolsApi, type Classe } from '@/api/schools.api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/Button'
@@ -45,9 +46,26 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
+function StatChip({ icon: Icon, label, value, color }: {
+  icon: React.ElementType; label: string; value: string | number; color: string
+}) {
+  return (
+    <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${color}`}>
+      <div className="w-9 h-9 rounded-full bg-white/60 flex items-center justify-center shrink-0">
+        <Icon size={16} />
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">{label}</p>
+        <p className="text-xl font-bold leading-tight">{value}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function ClassesPage() {
-  const qc   = useQueryClient()
-  const user = useAuthStore((s) => s.user)
+  const qc      = useQueryClient()
+  const user    = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
 
   const [search,        setSearch]        = useState('')
   const [modal,         setModal]         = useState<Classe | null | false>(false)
@@ -67,34 +85,47 @@ export default function ClassesPage() {
     },
   })
 
+  // Compute stats from the class list
+  const totalEleves   = classes.reduce((s, c) => s + c.nombre_eleves, 0)
+  const totalCapacite = classes.reduce((s, c) => s + c.capacite, 0)
+  const tauxOccup     = totalCapacite > 0 ? Math.round((totalEleves / totalCapacite) * 100) : 0
+  const nbPleines     = classes.filter((c) => c.est_pleine).length
+
   const columns: ColumnDef<Classe>[] = [
     {
-      header: 'Nom',
+      header: 'Classe',
       accessor: 'nom',
-      cell: (row) => <span className="font-medium text-gray-900">{row.nom}</span>,
-    },
-    {
-      header: 'Niveau',
-      accessor: 'niveau',
-      cell: (row) => row.niveau
-        ? <span className="text-gray-600 text-xs">{row.niveau}</span>
-        : <span className="text-gray-300">—</span>,
+      cell: (row) => (
+        <div>
+          <span className="font-semibold text-foreground">{row.nom}</span>
+          {row.niveau && <span className="ml-2 text-[10px] text-muted-foreground">{row.niveau}</span>}
+        </div>
+      ),
     },
     {
       header: 'Série',
       accessor: 'serie',
       cell: (row) => row.serie
         ? <Badge variant="neutral">Série {row.serie}</Badge>
-        : <span className="text-gray-300">—</span>,
+        : <span className="text-gray-300 text-xs">—</span>,
     },
     {
       header: 'Effectif',
       accessor: 'nombre_eleves',
       cell: (row) => (
-        <span className="text-gray-700 text-sm">
-          {row.nombre_eleves}
-          <span className="text-gray-400">/{row.capacite}</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">{row.nombre_eleves}</span>
+          <span className="text-xs text-muted-foreground">/ {row.capacite}</span>
+          <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min((row.nombre_eleves / row.capacite) * 100, 100)}%`,
+                background: row.est_pleine ? '#ef4444' : '#10b981',
+              }}
+            />
+          </div>
+        </div>
       ),
     },
     {
@@ -110,13 +141,52 @@ export default function ClassesPage() {
     <div className="flex-1 overflow-y-auto p-6 space-y-5">
       <PageHeader
         title="Classes"
-        subtitle={`${data?.total ?? '—'} classe${(data?.total ?? 0) > 1 ? 's' : ''} dans votre établissement`}
+        subtitle={`${data?.total ?? '—'} classe${(data?.total ?? 0) > 1 ? 's' : ''}`}
         actions={
-          <Button leftIcon={<Plus size={14} />} onClick={() => setModal(null)}>
-            Nouvelle classe
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              leftIcon={<BookOpen size={14} />}
+              onClick={() => navigate('/matieres')}
+            >
+              Matières & Coefficients
+            </Button>
+            <Button leftIcon={<Plus size={14} />} onClick={() => setModal(null)}>
+              Nouvelle classe
+            </Button>
+          </div>
         }
       />
+
+      {/* Stat cards */}
+      {!isLoading && classes.length > 0 && (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          <StatChip
+            icon={School}
+            label="Total classes"
+            value={data?.total ?? 0}
+            color="bg-emerald-50 text-emerald-700 border-emerald-200"
+          />
+          <StatChip
+            icon={Users}
+            label="Total élèves"
+            value={totalEleves}
+            color="bg-blue-50 text-blue-700 border-blue-200"
+          />
+          <StatChip
+            icon={TrendingUp}
+            label="Occupation moy."
+            value={`${tauxOccup}%`}
+            color={tauxOccup >= 80 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}
+          />
+          <StatChip
+            icon={School}
+            label="Classes pleines"
+            value={nbPleines}
+            color={nbPleines > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-600 border-gray-200'}
+          />
+        </div>
+      )}
 
       <DataTable
         data={classes}
@@ -129,6 +199,13 @@ export default function ClassesPage() {
         emptyMessage="Aucune classe trouvée"
         actions={(row) => (
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate(`/matieres?classe=${row.id}`)}
+              className="p-1.5 text-muted-foreground hover:text-primary hover:bg-emerald-50 rounded-md transition-colors"
+              title="Voir les matières"
+            >
+              <BookOpen size={13} />
+            </button>
             <button
               onClick={() => setModal(row)}
               className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"

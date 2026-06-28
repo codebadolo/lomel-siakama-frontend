@@ -42,6 +42,15 @@ export interface RapportRow {
   taux_absenteisme: number
 }
 
+export interface EvolutionPoint {
+  date: string
+  total: number
+  presents: number
+  absents: number
+  retards: number
+  taux_presence: number
+}
+
 export interface RapportAssiduite {
   stats_globales: {
     total: number
@@ -95,6 +104,26 @@ export const attendanceApi = {
     statut?: string
   }) => {
     const { data } = await apiClient.get<RapportAssiduite>('/presences/rapport/', { params })
+    return data
+  },
+
+  getEvolution: async (params: {
+    date_debut?: string
+    date_fin?: string
+    classe_id?: number
+  }) => {
+    const { data } = await apiClient.get<EvolutionPoint[]>('/presences/evolution/', { params })
+    return data
+  },
+
+  getTauxAssiduite: async (classe_id?: number) => {
+    const { data } = await apiClient.get<{
+      total: number
+      presents: number
+      absents: number
+      retards: number
+      taux_presence: number
+    }>('/presences/taux-assiduite/', { params: classe_id ? { classe_id } : undefined })
     return data
   },
 }

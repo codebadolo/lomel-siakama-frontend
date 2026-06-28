@@ -1,19 +1,11 @@
-import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell, type TooltipProps,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, type TooltipProps,
 } from 'recharts'
-
-const DATA = [
-  { jour: 'Lun', presents: 312, absents: 30 },
-  { jour: 'Mar', presents: 298, absents: 44 },
-  { jour: 'Mer', presents: 325, absents: 17 },
-  { jour: 'Jeu', presents: 308, absents: 34 },
-  { jour: 'Ven', presents: 320, absents: 22 },
-  { jour: 'Sam', presents: 285, absents: 57 },
-]
-
-const PRESENT_COLORS = ['#4f46e5', '#4338ca', '#6366f1', '#4f46e5', '#4338ca', '#6366f1']
+import { format, subDays } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import { attendanceApi } from '@/api/attendance.api'
 
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
@@ -23,82 +15,136 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
       {payload.map((p) => (
         <div key={p.name} className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-sm" style={{ background: p.color }} />
-          <span className="text-white/70 capitalize">{p.name === 'presents' ? 'Présents' : 'Absents'}</span>
+          <span className="text-white/70">
+            {p.name === 'presents' ? 'Présents' : p.name === 'absents' ? 'Absents' : 'Retards'}
+          </span>
           <span className="font-semibold ml-auto pl-4">{p.value}</span>
         </div>
       ))}
+      {payload[0] && (
+        <div className="pt-2 mt-1 border-t border-white/20 text-white/60">
+          Taux : {payload[0]?.payload?.taux_presence?.toFixed(1)}%
+        </div>
+      )}
     </div>
   )
 }
 
+const SKELETON = [...Array(7)].map((_, i) => ({
+  date: format(subDays(new Date(), 6 - i), 'd MMM', { locale: fr }),
+  presents: 0,
+  absents: 0,
+  retards: 0,
+  taux_presence: 0,
+}))
+
 export function AttendanceChart() {
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null)
-  const total = DATA.reduce((s, d) => s + d.presents, 0)
-  const avg = Math.round(total / DATA.length)
+  const dateDebut = format(subDays(new Date(), 29), 'yyyy-MM-dd')
+  const dateFin   = format(new Date(), 'yyyy-MM-dd')
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['presence-evolution', dateDebut, dateFin],
+    queryFn:  () => attendanceApi.getEvolution({ date_debut: dateDebut, date_fin: dateFin }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const chartData = isLoading || !data?.length
+    ? SKELETON
+    : data.map((d) => ({
+        ...d,
+        date: format(new Date(d.date), 'd MMM', { locale: fr }),
+      }))
+
+  const totalPresents = data?.reduce((s, d) => s + d.presents, 0) ?? 0
+  const totalTotal    = data?.reduce((s, d) => s + d.total, 0) ?? 0
+  const tauxMoyen     = totalTotal > 0 ? ((totalPresents / totalTotal) * 100).toFixed(1) : '—'
+  const picPresents   = data ? Math.max(...data.map((d) => d.presents), 0) : 0
 
   return (
     <div
-      className="bg-gradient-to-br from-white to-gray-50/60 border border-[var(--border)] rounded-xl p-5 transition-all duration-500 hover:shadow-xl animate-slide-in-up"
+      className="bg-white border border-[var(--border)] rounded-xl p-5 transition-all duration-500 hover:shadow-xl animate-slide-in-up"
       style={{ animationDelay: '400ms' }}
     >
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Présences — semaine en cours</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Présents vs absents par jour</p>
+          <h3 className="text-base font-semibold text-foreground">Évolution des présences</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">30 derniers jours</p>
         </div>
         <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-primary inline-block" />
-            Présents
+            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />Présents
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-gray-200 inline-block" />
-            Absents
+            <span className="w-2.5 h-2.5 rounded-sm bg-red-400 inline-block" />Absents
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block" />Retards
           </span>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={DATA} barSize={20} barCategoryGap="35%">
-          <defs>
-            <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366f1" />
-              <stop offset="100%" stopColor="#4338ca" />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-          <XAxis dataKey="jour" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={30} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-          <Bar
-            dataKey="presents"
-            name="presents"
-            fill="url(#presentGrad)"
-            radius={[6, 6, 0, 0]}
-            onMouseEnter={(_, index) => setHoveredBar(index)}
-            onMouseLeave={() => setHoveredBar(null)}
-          >
-            {DATA.map((_, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={hoveredBar === index ? '#4f46e5' : PRESENT_COLORS[index]}
-                style={{ filter: hoveredBar === index ? 'brightness(1.15) drop-shadow(0 4px 8px rgba(79,70,229,0.35))' : 'none' }}
-              />
-            ))}
-          </Bar>
-          <Bar dataKey="absents" name="absents" fill="#e2e8f0" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+      {isLoading ? (
+        <div className="h-[200px] bg-gray-50 rounded-lg animate-pulse" />
+      ) : !data?.length ? (
+        <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+          Aucune donnée de présence enregistrée
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="gradPresent" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0.03} />
+              </linearGradient>
+              <linearGradient id="gradAbsent" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#f87171" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#f87171" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 10, fill: '#94a3b8' }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={28} />
+            <Tooltip content={<CustomTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="presents"
+              stroke="#10b981"
+              strokeWidth={2}
+              fill="url(#gradPresent)"
+              dot={false}
+              activeDot={{ r: 4, fill: '#10b981' }}
+            />
+            <Area
+              type="monotone"
+              dataKey="absents"
+              stroke="#f87171"
+              strokeWidth={1.5}
+              fill="url(#gradAbsent)"
+              dot={false}
+              activeDot={{ r: 4, fill: '#f87171' }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
 
       <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
         <div className="text-sm">
-          <span className="text-muted-foreground">Moyenne : </span>
-          <span className="font-semibold text-foreground">{avg} élèves/jour</span>
+          <span className="text-muted-foreground">Taux moyen : </span>
+          <span className="font-semibold text-emerald-600">{tauxMoyen}%</span>
         </div>
-        <div className="text-sm">
-          <span className="text-muted-foreground">Pic : </span>
-          <span className="font-semibold text-primary">{Math.max(...DATA.map(d => d.presents))} élèves</span>
-        </div>
+        {picPresents > 0 && (
+          <div className="text-sm">
+            <span className="text-muted-foreground">Pic : </span>
+            <span className="font-semibold text-foreground">{picPresents}</span>
+          </div>
+        )}
       </div>
     </div>
   )

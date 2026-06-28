@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { format } from 'date-fns'
@@ -24,7 +25,16 @@ const fmt = (v: number | string) => Number(v).toLocaleString('fr-FR') + ' FCFA'
 export default function FinancesPage() {
   const qc   = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const [tab, setTab] = useState<Tab>('dashboard')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => {
+    const s = searchParams.get('section') as Tab | null
+    return (s && ['dashboard', 'frais', 'paiements', 'impayes'].includes(s)) ? s : 'dashboard'
+  })
+
+  useEffect(() => {
+    const s = searchParams.get('section') as Tab | null
+    if (s && ['dashboard', 'frais', 'paiements', 'impayes'].includes(s)) setTab(s)
+  }, [searchParams])
   const [showFraisModal,    setShowFraisModal]    = useState(false)
   const [showPaiementModal, setShowPaiementModal] = useState(false)
   const [selectedFrais,     setSelectedFrais]     = useState<FraisScolaire | null>(null)
