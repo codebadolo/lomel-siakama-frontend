@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,6 +7,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, type Utilisateur } from '@/api/users.api'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+
+function extractApiError(err: unknown): string {
+  const data = (err as { response?: { data?: unknown } })?.response?.data
+  if (!data) return 'Une erreur s\'est produite.'
+  if (typeof data === 'string') return data
+  const obj = data as Record<string, unknown>
+  const msgs = Object.values(obj).flat().filter(Boolean)
+  return msgs.length ? String(msgs[0]) : 'Une erreur s\'est produite.'
+}
 
 const createSchema = z.object({
   email:               z.string().email('Email invalide'),
@@ -48,6 +57,7 @@ interface Props {
 export function UserFormModal({ user, onClose }: Props) {
   const qc = useQueryClient()
   const isEdit = Boolean(user)
+  const [apiError, setApiError] = useState('')
 
   const createForm = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
@@ -75,10 +85,13 @@ export function UserFormModal({ user, onClose }: Props) {
     onClose()
   }
 
-  const createMutation = useMutation({ mutationFn: usersApi.create, onSuccess })
+  const onError = (err: unknown) => setApiError(extractApiError(err))
+
+  const createMutation = useMutation({ mutationFn: usersApi.create, onSuccess, onError })
   const editMutation   = useMutation({
     mutationFn: (values: EditValues) => usersApi.update(user!.id, values),
     onSuccess,
+    onError,
   })
 
   return (
@@ -132,7 +145,7 @@ export function UserFormModal({ user, onClose }: Props) {
               <span className="text-sm text-gray-700">Compte actif</span>
             </label>
 
-            <FormFooter isPending={editMutation.isPending} isError={editMutation.isError} onClose={onClose} isEdit />
+            <FormFooter isPending={editMutation.isPending} apiError={apiError} onClose={onClose} isEdit />
           </form>
         ) : (
           <form
@@ -191,7 +204,7 @@ export function UserFormModal({ user, onClose }: Props) {
               />
             </div>
 
-            <FormFooter isPending={createMutation.isPending} isError={createMutation.isError} onClose={onClose} />
+            <FormFooter isPending={createMutation.isPending} apiError={apiError} onClose={onClose} />
           </form>
         )}
       </div>
@@ -199,16 +212,16 @@ export function UserFormModal({ user, onClose }: Props) {
   )
 }
 
-function FormFooter({ isPending, isError, onClose, isEdit }: {
+function FormFooter({ isPending, apiError, onClose, isEdit }: {
   isPending: boolean
-  isError: boolean
+  apiError: string
   onClose: () => void
   isEdit?: boolean
 }) {
   return (
     <>
-      {isError && (
-        <p className="text-xs text-red-500">Une erreur s'est produite. Vérifiez les données et réessayez.</p>
+      {apiError && (
+        <p className="text-xs text-red-500">{apiError}</p>
       )}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="secondary" size="sm" onClick={onClose}>
