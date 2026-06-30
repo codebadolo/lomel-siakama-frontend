@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Edit2, Trash2, X, BookOpen, Users, TrendingUp, School } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, BookOpen, Users, TrendingUp, School, ToggleLeft, ToggleRight } from 'lucide-react'
 import { schoolsApi, type Classe } from '@/api/schools.api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/Button'
@@ -85,6 +85,11 @@ export default function ClassesPage() {
     },
   })
 
+  const toggleMutation = useMutation({
+    mutationFn: (id: number) => schoolsApi.toggleClasseActive(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['classes'] }),
+  })
+
   // Compute stats from the class list
   const totalEleves   = classes.reduce((s, c) => s + c.nombre_eleves, 0)
   const totalCapacite = classes.reduce((s, c) => s + c.capacite, 0)
@@ -131,9 +136,15 @@ export default function ClassesPage() {
     {
       header: 'Statut',
       accessor: 'est_pleine',
-      cell: (row) => row.est_pleine
-        ? <Badge variant="danger">Pleine</Badge>
-        : <Badge variant="success">Disponible</Badge>,
+      cell: (row) => (
+        <div className="flex items-center gap-1.5">
+          {!row.est_active && <Badge variant="neutral">Inactive</Badge>}
+          {row.est_active && (row.est_pleine
+            ? <Badge variant="danger">Pleine</Badge>
+            : <Badge variant="success">Disponible</Badge>
+          )}
+        </div>
+      ),
     },
   ]
 
@@ -205,6 +216,14 @@ export default function ClassesPage() {
               title="Voir les matières"
             >
               <BookOpen size={13} />
+            </button>
+            <button
+              onClick={() => toggleMutation.mutate(row.id)}
+              disabled={toggleMutation.isPending}
+              className={`p-1.5 rounded-md transition-colors ${row.est_active ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'}`}
+              title={row.est_active ? 'Désactiver' : 'Activer'}
+            >
+              {row.est_active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
             </button>
             <button
               onClick={() => setModal(row)}

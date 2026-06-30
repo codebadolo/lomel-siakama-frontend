@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Trash2, X, BookOpen, Settings } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, BookOpen, Settings, ToggleLeft, ToggleRight } from 'lucide-react'
 import { evaluationsApi, type Matiere } from '@/api/evaluations.api'
 import { schoolsApi, type ClasseMatiere } from '@/api/schools.api'
 import { useAuthStore } from '@/store/auth.store'
@@ -50,6 +50,11 @@ export default function MatieresPage() {
 
   const deleteMat = useMutation({
     mutationFn: (id: number) => evaluationsApi.deleteMatiere(id),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: ['matieres'] }),
+  })
+
+  const toggleMat = useMutation({
+    mutationFn: (id: number) => evaluationsApi.toggleMatiereActive(id),
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['matieres'] }),
   })
 
@@ -110,17 +115,24 @@ export default function MatieresPage() {
             ) : (
               <div className="p-2 space-y-1">
                 {matieres.map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-gray-50 group">
-                    <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                      <span className="text-[10px] font-bold text-emerald-700">
+                  <div key={m.id} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-gray-50 group ${!m.est_active ? 'opacity-50' : ''}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${m.est_active ? 'bg-emerald-100' : 'bg-gray-100'}`}>
+                      <span className={`text-[10px] font-bold ${m.est_active ? 'text-emerald-700' : 'text-gray-400'}`}>
                         {m.nom.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{m.nom}</p>
-                      <p className="text-[10px] text-muted-foreground">Coef. {m.coefficient}</p>
+                      <p className={`text-sm font-medium truncate ${m.est_active ? 'text-foreground' : 'text-muted-foreground line-through'}`}>{m.nom}</p>
+                      <p className="text-[10px] text-muted-foreground">Coef. {m.coefficient}{!m.est_active && ' · Inactive'}</p>
                     </div>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => toggleMat.mutate(m.id)}
+                        className={`p-1 rounded transition-colors ${m.est_active ? 'text-amber-400 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'}`}
+                        title={m.est_active ? 'Désactiver' : 'Activer'}
+                      >
+                        {m.est_active ? <ToggleRight size={11} /> : <ToggleLeft size={11} />}
+                      </button>
                       <button
                         onClick={() => setEditMatiere(m)}
                         className="p-1 text-muted-foreground hover:text-primary hover:bg-emerald-50 rounded transition-colors"

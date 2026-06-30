@@ -7,6 +7,7 @@ export interface Matiere {
   id: number
   nom: string
   coefficient: string
+  est_active: boolean
   ecole: number
 }
 
@@ -93,6 +94,11 @@ export const evaluationsApi = {
 
   deleteMatiere: async (id: number) => {
     await apiClient.delete(`/matieres/${id}/`)
+  },
+
+  toggleMatiereActive: async (id: number) => {
+    const { data } = await apiClient.post<{ est_active: boolean; detail: string }>(`/matieres/${id}/toggle_active/`)
+    return data
   },
 
   list: async (params?: {

@@ -103,6 +103,17 @@ export const studentsApi = {
     return data as Blob
   },
 
+  importExcel: async (file: File) => {
+    const form = new FormData()
+    form.append('fichier', file)
+    const { data } = await apiClient.post<{ crees: number; ignores: number; erreurs: string[] }>(
+      '/eleves/import_excel/',
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    return data
+  },
+
   changerClasse: async (id: number, classeId: number) => {
     const { data } = await apiClient.post<{ detail: string }>(`/eleves/${id}/changer_classe/`, {
       classe_id: classeId,

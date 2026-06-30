@@ -4,7 +4,7 @@ import {
   FileText, BookOpen, Calendar, CreditCard, AlertTriangle,
   UserCog, Settings, LogOut, School, UserRound,
   Bell, Activity, ChevronDown, BookMarked, GraduationCap,
-  BarChart3, Receipt, Wallet, TrendingDown,
+  BarChart3, Receipt, Wallet, TrendingDown, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -193,7 +193,7 @@ const PROMOTEUR_SECTIONS: { label: string; items: NavItem[] }[] = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { user, logout } = useAuthStore()
   const { isPromoter }   = usePermissions()
   const navigate = useNavigate()
@@ -207,15 +207,47 @@ export function Sidebar() {
   const sections = isPromoter ? PROMOTEUR_SECTIONS : SECTIONS
   const subtitle = isPromoter ? 'Espace Promoteur' : 'Administration'
 
+  if (collapsed) {
+    return (
+      <aside className="w-[52px] bg-card border-r border-[var(--border)] flex flex-col shrink-0 transition-all duration-300">
+        <div className="px-3 py-[14px] border-b border-[var(--border)] flex justify-center">
+          <img src="/logo.png" alt="LumEL" className="w-7 h-7 rounded-full object-cover" />
+        </div>
+        <nav className="flex-1 overflow-y-auto no-scrollbar px-1.5 py-4 space-y-1 flex flex-col items-center">
+          <NavLink to="/dashboard" title="Tableau de bord" className={({ isActive }) => cn(
+            'p-2 rounded-lg transition-all', isActive ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-secondary'
+          )}>
+            <LayoutDashboard size={15} />
+          </NavLink>
+          {[...SECTIONS, ...PROMOTEUR_SECTIONS].flatMap(s => s.items).map((item) => (
+            <NavLink key={item.to} to={item.to} title={item.label} className={({ isActive }) => cn(
+              'p-2 rounded-lg transition-all', isActive ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-secondary'
+            )}>
+              <item.icon size={15} />
+            </NavLink>
+          ))}
+        </nav>
+        <div className="border-t border-[var(--border)] p-2 flex justify-center">
+          <button onClick={onToggle} className="p-2 text-muted-foreground hover:bg-secondary rounded-lg" title="Agrandir">
+            <PanelLeftOpen size={15} />
+          </button>
+        </div>
+      </aside>
+    )
+  }
+
   return (
-    <aside className="w-[232px] bg-card border-r border-[var(--border)] flex flex-col shrink-0">
+    <aside className="w-[232px] bg-card border-r border-[var(--border)] flex flex-col shrink-0 transition-all duration-300">
       {/* Brand */}
       <div className="px-4 py-[14px] border-b border-[var(--border)] flex items-center gap-2.5">
         <img src="/logo.png" alt="LumEL SGS" className="w-10 h-10 rounded-full object-cover shrink-0" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground tracking-tight">LumEL SGS</p>
           <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
         </div>
+        <button onClick={onToggle} className="p-1.5 text-muted-foreground hover:bg-secondary rounded-lg shrink-0" title="Réduire">
+          <PanelLeftClose size={14} />
+        </button>
       </div>
 
       {/* Nav */}

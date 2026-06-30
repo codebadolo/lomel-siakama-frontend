@@ -85,7 +85,7 @@ export const attendanceApi = {
   },
 
   saisieGroupee: async (payload: {
-    creneau_id: number
+    creneau_id?: number
     date: string
     presences: Array<{
       eleve_id: number

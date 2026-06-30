@@ -61,9 +61,13 @@ export default function PresencesPage() {
   const eleves = elevesData?.resultats ?? []
 
   const { data: presencesData } = useQuery({
-    queryKey: ['presences', creneauId, date],
-    queryFn: () => attendanceApi.listPresences({ creneau: creneauId!, date }),
-    enabled: creneauId !== null,
+    queryKey: ['presences', classeId, creneauId, date],
+    queryFn: () => attendanceApi.listPresences({
+      creneau: creneauId ?? undefined,
+      'creneau__classe': creneauId ? undefined : (classeId ?? undefined),
+      date,
+    }),
+    enabled: classeId !== null,
   })
 
   const { data: rapport, isFetching: loadingRapport } = useQuery({
@@ -92,7 +96,7 @@ export default function PresencesPage() {
 
   const saveMutation = useMutation({
     mutationFn: () => attendanceApi.saisieGroupee({
-      creneau_id: creneauId!,
+      creneau_id: creneauId ?? undefined,
       date,
       presences: eleves.map((e) => ({
         eleve_id:     e.id,
@@ -120,7 +124,7 @@ export default function PresencesPage() {
     }
   }, [statuts])
 
-  const canSave = classeId !== null && creneauId !== null && eleves.length > 0
+  const canSave = classeId !== null && eleves.length > 0
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -181,10 +185,10 @@ export default function PresencesPage() {
               <select
                 value={creneauId ?? ''}
                 onChange={(e) => { setCreneauId(e.target.value ? Number(e.target.value) : null); setStatuts({}) }}
-                disabled={!classeId || creneaux.length === 0}
+                disabled={!classeId}
                 className="appearance-none pl-3 pr-8 py-2 text-sm border border-[var(--border)] rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/40 bg-white disabled:opacity-50"
               >
-                <option value="">{creneaux.length === 0 && classeId ? 'Aucun cours ce jour' : 'Sélectionner…'}</option>
+                <option value="">Sans créneau spécifique</option>
                 {creneaux.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)} — {c.nom_matiere}

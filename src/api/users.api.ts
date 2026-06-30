@@ -66,4 +66,9 @@ export const usersApi = {
     const { data } = await apiClient.delete<{ detail: string }>(`/auth/utilisateurs/${id}/`)
     return data
   },
+
+  activate: async (id: number) => {
+    const { data } = await apiClient.post<{ detail: string }>(`/auth/utilisateurs/${id}/activer/`)
+    return data
+  },
 }

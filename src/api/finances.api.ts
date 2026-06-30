@@ -116,4 +116,12 @@ export const financesApi = {
 
   relevePdfUrl: (eleveId: number) =>
     `${apiClient.defaults.baseURL}/finances/paiements/releve-pdf/?eleve_id=${eleveId}`,
+
+  getRelevePdf: async (eleveId: number) => {
+    const { data } = await apiClient.get('/finances/paiements/releve-pdf/', {
+      params: { eleve_id: eleveId },
+      responseType: 'blob',
+    })
+    return data as Blob
+  },
 }

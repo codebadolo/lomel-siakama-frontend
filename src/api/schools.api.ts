@@ -30,6 +30,7 @@ export interface Classe {
   capacite: number
   nombre_eleves: number
   est_pleine: boolean
+  est_active: boolean
   ecole: number
   cree_le?: string
 }
@@ -105,6 +106,11 @@ export const schoolsApi = {
 
   deleteClasse: async (id: number) => {
     await apiClient.delete(`/ecoles/classes/${id}/`)
+  },
+
+  toggleClasseActive: async (id: number) => {
+    const { data } = await apiClient.post<{ est_active: boolean; detail: string }>(`/ecoles/classes/${id}/toggle_active/`)
+    return data
   },
 
   getClasseEleves: async (id: number) => {

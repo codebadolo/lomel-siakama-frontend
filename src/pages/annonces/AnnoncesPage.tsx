@@ -18,9 +18,10 @@ const PUBLIC_BADGE: Record<string, 'neutral' | 'warning' | 'success'> = {
 }
 
 const CATEGORIE_CONFIG: Record<string, { label: string; className: string }> = {
-  general:       { label: 'Général',           className: 'bg-gray-100 text-gray-600' },
-  recrutement:   { label: 'Recrutement',        className: 'bg-blue-100 text-blue-700' },
-  para_scolaire: { label: 'Para-scolaire',      className: 'bg-purple-100 text-purple-700' },
+  general:          { label: 'Général',                    className: 'bg-gray-100 text-gray-600'    },
+  recrutement:      { label: 'Recrutement',                className: 'bg-blue-100 text-blue-700'    },
+  para_scolaire:    { label: 'Para-scolaire',              className: 'bg-purple-100 text-purple-700' },
+  frais_scolarite:  { label: 'Frais de scolarité',         className: 'bg-amber-100 text-amber-700'  },
 }
 
 export default function AnnoncesPage() {
@@ -143,9 +144,10 @@ export default function AnnoncesPage() {
             key: 'categorie',
             label: 'Toutes catégories',
             options: [
-              { value: 'general',       label: 'Général' },
-              { value: 'recrutement',   label: 'Recrutement' },
-              { value: 'para_scolaire', label: 'Para-scolaire' },
+              { value: 'general',         label: 'Général' },
+              { value: 'recrutement',     label: 'Recrutement' },
+              { value: 'para_scolaire',   label: 'Para-scolaire' },
+              { value: 'frais_scolarite', label: 'Frais de scolarité' },
             ],
           },
         ]}

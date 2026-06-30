@@ -54,7 +54,7 @@ export interface Annonce {
   nom_auteur: string
   public_cible: 'tous' | 'parents' | 'enseignants'
   public_label: string
-  categorie: 'general' | 'recrutement' | 'para_scolaire'
+  categorie: 'general' | 'recrutement' | 'para_scolaire' | 'frais_scolarite'
   est_active: boolean
   publie_le: string
   fichier: string | null

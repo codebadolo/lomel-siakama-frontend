@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Plus, Edit2, UserX } from 'lucide-react'
+import { Plus, Edit2, UserX, UserCheck } from 'lucide-react'
 import { usersApi, type Utilisateur } from '@/api/users.api'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -55,6 +55,11 @@ export default function UtilisateursPage() {
       qc.invalidateQueries({ queryKey: ['utilisateurs'] })
       setConfirmUser(null)
     },
+  })
+
+  const activateMutation = useMutation({
+    mutationFn: (id: number) => usersApi.activate(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['utilisateurs'] }),
   })
 
   const columns: ColumnDef<Utilisateur>[] = [
@@ -173,13 +178,21 @@ export default function UtilisateursPage() {
             >
               <Edit2 size={14} />
             </button>
-            {row.is_active && (
+            {row.is_active ? (
               <button
                 onClick={() => setConfirmUser(row)}
                 className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                 title="Désactiver"
               >
                 <UserX size={14} />
+              </button>
+            ) : (
+              <button
+                onClick={() => activateMutation.mutate(row.id)}
+                className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                title="Activer"
+              >
+                <UserCheck size={14} />
               </button>
             )}
           </div>

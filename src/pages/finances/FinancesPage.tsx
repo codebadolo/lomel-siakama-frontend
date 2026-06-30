@@ -69,6 +69,18 @@ export default function FinancesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['frais'] }),
   })
 
+  const downloadReleve = async (eleveId: number) => {
+    try {
+      const blob = await financesApi.getRelevePdf(eleveId)
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `releve_${eleveId}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch { /* silent */ }
+  }
+
   const fraisColumns: ColumnDef<FraisScolaire>[] = [
     {
       header: 'Libellé',
@@ -152,15 +164,13 @@ export default function FinancesPage() {
       header: 'Relevé',
       accessor: 'eleve',
       cell: (row) => (
-        <a
-          href={financesApi.relevePdfUrl(row.eleve)}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          onClick={() => downloadReleve(row.eleve)}
           className="flex items-center gap-1 text-xs text-primary hover:underline"
           title="Télécharger le relevé PDF"
         >
           <Download size={12} /> PDF
-        </a>
+        </button>
       ),
     },
   ]
@@ -274,7 +284,7 @@ export default function FinancesPage() {
 
       {/* ─── Impayés ──────────────────────────────────────────────────────── */}
       {tab === 'impayes' && (
-        <ImpayesTab impayes={impayes} loading={loadingImpayes} />
+        <ImpayesTab impayes={impayes} loading={loadingImpayes} onDownloadReleve={downloadReleve} />
       )}
 
       {showFraisModal && (
@@ -411,7 +421,7 @@ function DashboardTab({ dashboard, loading }: { dashboard: Awaited<ReturnType<ty
 
 // ─── Impayés Tab ─────────────────────────────────────────────────────────────
 
-function ImpayesTab({ impayes, loading }: { impayes: ReturnType<typeof financesApi.getImpayes> extends Promise<{ resultats: infer T }> ? T : never; loading: boolean }) {
+function ImpayesTab({ impayes, loading, onDownloadReleve }: { impayes: ReturnType<typeof financesApi.getImpayes> extends Promise<{ resultats: infer T }> ? T : never; loading: boolean; onDownloadReleve: (id: number) => void }) {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -461,14 +471,12 @@ function ImpayesTab({ impayes, loading }: { impayes: ReturnType<typeof financesA
                 {format(new Date(imp.echeance), 'd MMM yyyy', { locale: fr })}
               </td>
               <td className="px-3 py-3 text-center">
-                <a
-                  href={financesApi.relevePdfUrl(imp.eleve_id)}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={() => onDownloadReleve(imp.eleve_id)}
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
                   <Download size={12} /> PDF
-                </a>
+                </button>
               </td>
             </tr>
           ))}

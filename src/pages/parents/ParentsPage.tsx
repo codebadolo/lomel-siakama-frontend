@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { parentsApi, type ProfilParent } from '@/api/students.api'
 import { Avatar } from '@/components/ui/Avatar'
@@ -11,10 +11,17 @@ const LIEN_LABEL: Record<string, string> = { pere: 'Père', mere: 'Mère', tuteu
 
 export default function ParentsPage() {
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(t)
+  }, [search])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['parents', search],
-    queryFn: () => parentsApi.list({ search: search || undefined }),
+    queryKey: ['parents', debouncedSearch],
+    queryFn: () => parentsApi.list({ search: debouncedSearch || undefined }),
+    placeholderData: keepPreviousData,
   })
   const parents = data?.resultats ?? []
 

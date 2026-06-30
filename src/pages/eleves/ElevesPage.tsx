@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Archive, Edit2, Users, X, Download } from 'lucide-react'
+import { Plus, Archive, Edit2, Users, X, Download, Upload } from 'lucide-react'
 import { studentsApi, type Eleve } from '@/api/students.api'
 import { schoolsApi, type Classe } from '@/api/schools.api'
 import { useAuthStore } from '@/store/auth.store'
@@ -47,6 +47,7 @@ export default function ElevesPage() {
   const [modal,        setModal]        = useState<Eleve | null | false>(false)
   const [confirmArchive, setConfirmArchive] = useState<Eleve | null>(null)
   const [exporting,    setExporting]    = useState(false)
+  const [showImport,   setShowImport]   = useState(false)
 
   const { data: classesData } = useQuery({
     queryKey: ['classes'],
@@ -146,6 +147,14 @@ export default function ElevesPage() {
         ]}
         actions={
           <>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Upload size={13} />}
+              onClick={() => setShowImport(true)}
+            >
+              Import Excel
+            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -274,6 +283,15 @@ export default function ElevesPage() {
           onConfirm={() => archiveMutation.mutate(confirmArchive)}
         />
       )}
+      {showImport && (
+        <ImportExcelModal
+          onClose={() => setShowImport(false)}
+          onSuccess={() => {
+            qc.invalidateQueries({ queryKey: ['eleves'] })
+            setShowImport(false)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -374,6 +392,70 @@ function ConfirmModal({ title, body, confirmLabel, isPending, onClose, onConfirm
         <div className="flex justify-end gap-2">
           <Button variant="secondary" size="sm" onClick={onClose}>Annuler</Button>
           <Button variant="danger" size="sm" loading={isPending} onClick={onConfirm}>{confirmLabel}</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ImportExcelModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [file, setFile] = useState<File | null>(null)
+  const [result, setResult] = useState<{ crees: number; ignores: number; erreurs: string[] } | null>(null)
+
+  const importMut = useMutation({
+    mutationFn: (f: File) => studentsApi.importExcel(f),
+    onSuccess: (data) => {
+      setResult(data)
+      if (data.crees > 0) onSuccess()
+    },
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-base font-semibold text-gray-900">Importer des élèves (.xlsx)</h2>
+          <button onClick={onClose}><X size={18} className="text-gray-400 hover:text-gray-600" /></button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700 space-y-1">
+            <p className="font-semibold">Format attendu (colonnes) :</p>
+            <p>A: Nom · B: Prénom · C: Sexe (M/F) · D: Date naissance (YYYY-MM-DD) · E: Classe (nom exact)</p>
+            <p>La ligne 1 est l'en-tête (ignorée). Le matricule est généré automatiquement.</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Fichier Excel</label>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+          </div>
+          {result && (
+            <div className={`rounded-lg p-3 text-sm ${result.crees > 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+              <p className="font-semibold">{result.crees} élève{result.crees > 1 ? 's' : ''} importé{result.crees > 1 ? 's' : ''}</p>
+              {result.ignores > 0 && <p className="text-xs mt-1">{result.ignores} ligne{result.ignores > 1 ? 's' : ''} ignorée{result.ignores > 1 ? 's' : ''}</p>}
+              {result.erreurs.length > 0 && (
+                <ul className="mt-2 text-xs text-red-600 space-y-0.5">
+                  {result.erreurs.map((e, i) => <li key={i}>• {e}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+          {importMut.isError && <p className="text-xs text-red-500">Erreur lors de l'import.</p>}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="secondary" size="sm" onClick={onClose}>Fermer</Button>
+            <Button
+              size="sm"
+              loading={importMut.isPending}
+              disabled={!file}
+              leftIcon={<Upload size={13} />}
+              onClick={() => file && importMut.mutate(file)}
+            >
+              Importer
+            </Button>
+          </div>
         </div>
       </div>
     </div>

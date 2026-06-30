@@ -13,7 +13,7 @@ const schema = z.object({
   titre:        z.string().min(1, 'Titre requis'),
   contenu:      z.string().min(1, 'Contenu requis'),
   public_cible: z.enum(['tous', 'parents', 'enseignants']),
-  categorie:    z.enum(['general', 'recrutement', 'para_scolaire']),
+  categorie:    z.enum(['general', 'recrutement', 'para_scolaire', 'frais_scolarite']),
   est_active:   z.boolean(),
 })
 type FormValues = z.infer<typeof schema>
@@ -25,9 +25,10 @@ const PUBLIC_OPTIONS = [
 ] as const
 
 const CATEGORIE_OPTIONS = [
-  { value: 'general',       label: 'Général' },
-  { value: 'recrutement',   label: 'Test / Recrutement' },
-  { value: 'para_scolaire', label: 'Activité para-scolaire' },
+  { value: 'general',         label: 'Général' },
+  { value: 'recrutement',     label: 'Test / Recrutement' },
+  { value: 'para_scolaire',   label: 'Activité para-scolaire' },
+  { value: 'frais_scolarite', label: 'Frais de scolarité / Paiement' },
 ] as const
 
 interface Props {
